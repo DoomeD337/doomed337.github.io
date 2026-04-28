@@ -5,32 +5,31 @@
   <title>Doomed Design Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<script src="script.js"></script>
 <body>
-  <main class="app"></main>
+  <main class="app">
+    <section class="hero">
+      <h1>🎨 Design Eye Trainer</h1>
+      <p>Выбери лучший вариант дизайна</p>
+    </section>
 
-<h1>🎨 Design Eye Trainer</h1>
-<p>Выбери лучший вариант дизайна</p>
+    <section class="game">
+      <div class="card" onclick="checkAnswer(1)">
+        <h3>Вариант A</h3>
+        <div class="box bad">Текст слишком мелкий</div>
+      </div>
 
-<div class="game">
-  <div class="card" onclick="checkAnswer(1)">
-    <h3>Вариант A</h3>
-    <div class="box bad">
-      <p>Текст слишком мелкий</p>
-    </div>
-  </div>
+      <div class="card" onclick="checkAnswer(2)">
+        <h3>Вариант B</h3>
+        <div class="box good">Хороший контраст и отступы</div>
+      </div>
+    </section>
 
-  <div class="card" onclick="checkAnswer(2)">
-    <h3>Вариант B</h3>
-    <div class="box good">
-      <p>Хороший контраст и отступы</p>
-    </div>
-  </div>
-</div>
+    <section class="status">
+      <p id="result"></p>
+      <p>Счёт: <span id="score">0</span></p>
+    </section>
+  </main>
 
-<p id="result"></p>
-<p>Счёт: <span id="score">0</span></p>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
