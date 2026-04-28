@@ -3,13 +3,22 @@ let time = 10;
 let timer;
 
 const questions = [
-  { good: "Хороший контраст и отступы", bad: "Текст слишком мелкий" },
-  { good: "Читаемый контраст", bad: "Плохой контраст: серый на сером" },
-  { good: "Чистая структура и воздух", bad: "Слишком много текста без отступов" },
-  { good: "Кнопка хорошо выделена", bad: "Кнопка сливается с фоном" }
+  {
+    good: `
+      <div class="mock-title"></div>
+      <div class="mock-text"></div>
+      <div class="mock-text short"></div>
+      <div class="mock-button">Начать</div>
+    `,
+    bad: `
+      <div class="mock-title"></div>
+      <div class="mock-text"></div>
+      <div class="mock-text short"></div>
+      <div class="mock-button">Начать</div>
+    `
+  }
 ];
 
-let currentQuestion;
 let correctAnswer;
 
 const bestScore = localStorage.getItem("best") || 0;
@@ -32,21 +41,26 @@ function startTimer() {
 }
 
 function loadQuestion() {
-  currentQuestion = questions[Math.floor(Math.random() * questions.length)];
-
   const goodOnLeft = Math.random() > 0.5;
   correctAnswer = goodOnLeft ? 1 : 2;
 
-  document.querySelectorAll(".box")[0].textContent = goodOnLeft
-    ? currentQuestion.good
-    : currentQuestion.bad;
+  const previewA = document.getElementById("previewA");
+  const previewB = document.getElementById("previewB");
 
-  document.querySelectorAll(".box")[1].textContent = goodOnLeft
-    ? currentQuestion.bad
-    : currentQuestion.good;
+  previewA.className = "ui-preview";
+  previewB.className = "ui-preview";
+
+  if (goodOnLeft) {
+    previewA.innerHTML = questions[0].good;
+    previewB.innerHTML = questions[0].bad;
+    previewB.classList.add("bad-ui");
+  } else {
+    previewA.innerHTML = questions[0].bad;
+    previewA.classList.add("bad-ui");
+    previewB.innerHTML = questions[0].good;
+  }
 
   document.getElementById("result").textContent = "";
-
   startTimer();
 }
 
@@ -71,7 +85,9 @@ function checkAnswer(choice) {
 function endGame() {
   document.getElementById("result").textContent = "⏰ Время вышло!";
 
-  if (score > bestScore) {
+  const best = Number(localStorage.getItem("best") || 0);
+
+  if (score > best) {
     localStorage.setItem("best", score);
     document.getElementById("best").textContent = score;
   }
