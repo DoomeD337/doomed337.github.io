@@ -104,3 +104,59 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+.ui-preview {
+  margin-top: 28px;
+  padding: 18px;
+  border-radius: 22px;
+  min-height: 150px;
+  background: #f5f7fb;
+  color: #111;
+}
+
+.mock-title {
+  height: 18px;
+  width: 70%;
+  border-radius: 20px;
+  background: #111827;
+  margin-bottom: 14px;
+}
+
+.mock-text {
+  height: 10px;
+  width: 90%;
+  border-radius: 20px;
+  background: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.mock-text.short {
+  width: 55%;
+}
+
+.mock-button {
+  margin-top: 20px;
+  width: 110px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #6366f1;
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bad-ui {
+  background: #f1f1f1;
+}
+
+.bad-ui .mock-title,
+.bad-ui .mock-text {
+  background: #b8b8b8;
+}
+
+.bad-ui .mock-button {
+  background: #d1d1d1;
+  color: #aaa;
+  border-radius: 2px;
+}
