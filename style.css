@@ -32,3 +32,9 @@ body {
   font-size: 16px;
   color: white;
 }
+
+.card:hover {
+  border-color: #00ffcc;
+  transform: scale(1.05);
+  transition: 0.2s;
+}
