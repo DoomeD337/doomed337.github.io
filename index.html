@@ -9,27 +9,27 @@
   <main class="app">
     <section class="hero">
       <h1>🎨 Design Eye Trainer</h1>
-      <p>Выбери лучший вариант дизайна</p>
+      <p>Выбери лучший вариант интерфейса</p>
     </section>
 
     <section class="game">
       <div class="card" onclick="checkAnswer(1)">
         <h3>Вариант A</h3>
-        <div class="box bad">Текст слишком мелкий</div>
+        <div class="ui-preview" id="previewA"></div>
       </div>
 
       <div class="card" onclick="checkAnswer(2)">
         <h3>Вариант B</h3>
-        <div class="box good">Хороший контраст и отступы</div>
+        <div class="ui-preview" id="previewB"></div>
       </div>
     </section>
 
     <section class="status">
-  <p id="result"></p>
-  <p>Счёт: <span id="score">0</span></p>
-  <p>⏱ Время: <span id="time">10</span></p>
-  <p>🏆 Рекорд: <span id="best">0</span></p>
-</section>
+      <p id="result"></p>
+      <p>Счёт: <span id="score">0</span></p>
+      <p>⏱ Время: <span id="time">10</span></p>
+      <p>🏆 Рекорд: <span id="best">0</span></p>
+    </section>
   </main>
 
   <script src="script.js"></script>
