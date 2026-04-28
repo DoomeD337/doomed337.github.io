@@ -2,46 +2,47 @@ let score = 0;
 
 const questions = [
   {
-    a: "Текст слишком мелкий",
-    b: "Хороший контраст и отступы",
-    correct: 2
+    good: "Хороший контраст и отступы",
+    bad: "Текст слишком мелкий"
   },
   {
-    a: "Плохой контраст (серый на сером)",
-    b: "Читаемый контраст",
-    correct: 2
+    good: "Читаемый контраст",
+    bad: "Плохой контраст: серый на сером"
   },
   {
-    a: "Слишком много текста без отступов",
-    b: "Чистая структура и воздух",
-    correct: 2
+    good: "Чистая структура и воздух",
+    bad: "Слишком много текста без отступов"
   },
   {
-    a: "Кнопка сливается с фоном",
-    b: "Кнопка хорошо выделена",
-    correct: 2
+    good: "Кнопка хорошо выделена",
+    bad: "Кнопка сливается с фоном"
   }
 ];
 
-let current = 0;
+let currentQuestion;
+let correctAnswer;
 
 function loadQuestion() {
-  const q = questions[current];
+  currentQuestion = questions[Math.floor(Math.random() * questions.length)];
 
-  document.querySelectorAll(".card h3")[0].textContent = "Вариант A";
-  document.querySelectorAll(".card h3")[1].textContent = "Вариант B";
+  const goodOnLeft = Math.random() > 0.5;
+  correctAnswer = goodOnLeft ? 1 : 2;
 
-  document.querySelectorAll(".box")[0].textContent = q.a;
-  document.querySelectorAll(".box")[1].textContent = q.b;
+  document.querySelectorAll(".box")[0].textContent = goodOnLeft
+    ? currentQuestion.good
+    : currentQuestion.bad;
+
+  document.querySelectorAll(".box")[1].textContent = goodOnLeft
+    ? currentQuestion.bad
+    : currentQuestion.good;
 
   document.getElementById("result").textContent = "";
 }
 
 function checkAnswer(choice) {
-  const q = questions[current];
   const result = document.getElementById("result");
 
-  if (choice === q.correct) {
+  if (choice === correctAnswer) {
     result.textContent = "✅ Правильно!";
     score++;
   } else {
@@ -50,9 +51,7 @@ function checkAnswer(choice) {
 
   document.getElementById("score").textContent = score;
 
-  current = (current + 1) % questions.length;
-
-  setTimeout(loadQuestion, 1000);
+  setTimeout(loadQuestion, 900);
 }
 
 loadQuestion();
