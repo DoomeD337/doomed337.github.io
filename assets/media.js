@@ -92,6 +92,10 @@
     await txDone(tx);
   }
 
+  async function assetGet(slot){ return heroGet(slot); }
+  async function assetSet(slot,file){ return heroSet(slot,file); }
+  async function assetRemove(slot){ return heroRemove(slot); }
+
   const objectURL=rec=>rec?.blob ? URL.createObjectURL(rec.blob) : '';
-  window.VRMedia={get,add,remove,removeProduct,makeCover,count,objectURL,heroGet,heroSet,heroRemove};
+  window.VRMedia={get,add,remove,removeProduct,makeCover,count,objectURL,heroGet,heroSet,heroRemove,assetGet,assetSet,assetRemove};
 })();

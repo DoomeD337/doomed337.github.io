@@ -12,7 +12,9 @@
 - каталог и витрина читают локальные изменения админ‑панели;
 - адаптив для мобильных.
 
-
+## Demo admin
+Логин: `admin`
+Пароль: `vroderovno2026`
 
 ВАЖНО: это статический frontend-прототип. Данные авторизации и изменения каталога хранятся в браузере и не являются безопасной production-реализацией. Для реального магазина нужны backend, база данных, серверная авторизация, API заказов и платежей.
 
@@ -100,3 +102,11 @@ V16: hero T-shirt replaced with a configurable animated banner object (default: 
 V17: hero object updated to use the provided original ВР monogram assets (dark and light variants), with automatic theme-aware switching.
 
 V18: hero monogram replaced with a volumetric matte dark-metal render based on the supplied ВР mark.
+
+V19: admin panel expanded into a mini visual CMS with separate sections for homepage banners and the “Живые фото” carousel. Each banner/carousel image can now be replaced individually from the admin panel.
+
+V20: admin panel reorganized into separate tabs (Hero, Banners, Live Photos, Catalog, Settings) for better usability. Added favicon management in admin with upload/reset and automatic site-wide application on all pages.
+
+V22: restored previous minimal cursor style and improved touch/mobile detection. Custom cursor disabled on touch devices for stable mobile UX.
+
+V23: restored V20-style cursor feel and added full mobile responsive optimization for hero, catalog, navigation, galleries and performance.

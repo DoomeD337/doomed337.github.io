@@ -21,6 +21,36 @@ async function hydrateProductMedia(root=document){
     }catch(e){}
   }));
 }
+async function hydrateManagedPageAssets(root=document){
+  if(!window.VRMedia?.assetGet)return;
+  const nodes=$$('[data-site-slot]',root);
+  await Promise.all(nodes.map(async im=>{
+    try{
+      const rec=await window.VRMedia.assetGet(im.dataset.siteSlot);
+      if(rec?.blob){
+        if(im.dataset.vrObjectUrl)URL.revokeObjectURL(im.dataset.vrObjectUrl);
+        const url=window.VRMedia.objectURL(rec);
+        im.src=url;im.dataset.vrObjectUrl=url;
+      }
+    }catch(e){}
+  }));
+}
+async function applyManagedFavicon(){
+  const ensure=(rel,id,type)=>{let link=document.querySelector(`link[rel="${rel}"]`);if(!link){link=document.createElement('link');link.rel=rel;if(id)link.id=id;if(type)link.type=type;document.head.appendChild(link)}return link};
+  const icon=ensure('icon','siteFavicon','image/png');
+  const shortcut=ensure('shortcut icon',null,null);
+  const apple=ensure('apple-touch-icon',null,null);
+  let src='assets/logos/logo-black-mark.png';
+  try{
+    const rec=window.VRMedia?.assetGet?await window.VRMedia.assetGet('site-favicon'):null;
+    if(rec?.blob){
+      if(window.__vrFaviconUrl)URL.revokeObjectURL(window.__vrFaviconUrl);
+      window.__vrFaviconUrl=window.VRMedia.objectURL(rec);
+      src=window.__vrFaviconUrl;
+    }
+  }catch(e){}
+  icon.href=src; shortcut.href=src; apple.href=src;
+}
 function getCart(){return JSON.parse(localStorage.getItem('vr_cart')||'[]')}function saveCart(c){localStorage.setItem('vr_cart',JSON.stringify(c));updateCartCount()}function addCart(id,size='M'){const p=(window.VR_PRODUCTS||[]).find(x=>x.id===id);if(p&&p.stock===0){toast('Нет в наличии');return}const c=getCart(),found=c.find(x=>x.id===id&&x.size===size);if(found)found.qty++;else c.push({id,size,qty:1});saveCart(c);renderCart();$('#cartDrawer')?.classList.add('open');$('#overlay')?.classList.add('show')}function removeCart(idx){const c=getCart();c.splice(idx,1);saveCart(c);renderCart()}function updateCartCount(){const n=getCart().reduce((a,b)=>a+b.qty,0);const el=$('#cartCount');if(el)el.textContent=n}
 function renderCart(){
   const box=$('#cartItems'),total=$('#cartTotal');if(!box)return;
@@ -72,7 +102,29 @@ function reveals(){
     },4700);
   }
 }
-function cursor(){const d=$('.cursor-dot');if(!d||matchMedia('(pointer:coarse)').matches)return;addEventListener('mousemove',e=>{d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'})}
+function cursor(){
+  const d=$('.cursor-dot'),r=$('.vr-cursor-ring'),l=$('.vr-cursor-label');
+  const isTouch=()=>matchMedia('(pointer:coarse)').matches||matchMedia('(hover:none)').matches||'ontouchstart' in window;
+  if(!d||isTouch())return;
+  let x=0,y=0,tx=0,ty=0,active=false;
+  const hide=()=>{d.classList.remove('show');r?.classList.remove('show');l?.classList.remove('show')};
+  addEventListener('mousemove',e=>{tx=e.clientX;ty=e.clientY;active=true;d.classList.add('show');r?.classList.add('show')},{passive:true});
+  addEventListener('mouseleave',hide);
+  const loop=()=>{
+    x+=(tx-x)*.18;y+=(ty-y)*.18;
+    [d,r,l].forEach(el=>{if(el){el.style.left=x+'px';el.style.top=y+'px'}});
+    requestAnimationFrame(loop)
+  };
+  loop();
+  $$('a,button,.btn,.icon-btn').forEach(el=>{
+    el.addEventListener('mouseenter',()=>d.classList.add('hover'));
+    el.addEventListener('mouseleave',()=>d.classList.remove('hover'))
+  });
+  $$('img').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{if(l){l.textContent='VIEW';l.classList.add('show')}});
+    el.addEventListener('mouseleave',()=>l?.classList.remove('show'))
+  });
+}
 function renderProductCards(target,items){
   const el=$(target);if(!el)return;items=items.filter(p=>p.visible!==false);
   el.innerHTML=items.map(p=>`<article class="product-card reveal"><a href="product.html?id=${p.id}" class="product-image"><img src="${productFallback(p.id)}" data-product-media="${p.id}" alt="${p.name}">${p.tag?`<span class="product-tag">${p.tag}</span>`:''}</a><button class="quick-add" aria-label="Добавить в корзину" onclick="addCart('${p.id}')">+</button><a href="product.html?id=${p.id}" class="product-info"><span class="product-name">${p.name}</span><span class="product-price">${money(p.price)}</span></a></article>`).join('');
@@ -312,6 +364,21 @@ function initInstagramGallery(){
     shots.forEach(s=>s.addEventListener('pointerleave',()=>{const im=s.querySelector('img');if(im)im.style.transform=''}));
   }
 }
+const HOME_BANNER_SLOTS=[
+  {slot:'home-manifesto-photo',title:'Большой баннер / Манифест',description:'Большой фотоблок рядом с манифестом бренда',defaultSrc:'assets/instagram/ig-live-04.jpg',recommended:'Рекомендуемо: 1200×1600 px или больше'},
+  {slot:'home-campaign-left',title:'Campaign banner / Фото 01',description:'Левый баннер в секции campaign wall',defaultSrc:'assets/instagram/ig-live-07.jpg',recommended:'Рекомендуемо: вертикальный кадр 3:4'},
+  {slot:'home-campaign-right',title:'Campaign banner / Фото 02',description:'Правый баннер в секции campaign wall',defaultSrc:'assets/instagram/ig-live-01.jpg',recommended:'Рекомендуемо: вертикальный кадр 3:4'},
+];
+const LIVE_CAROUSEL_SLOTS=[
+  {slot:'live-photo-01',title:'Живые фото / 01',description:'Первый кадр карусели',defaultSrc:'assets/instagram/ig-live-01.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-02',title:'Живые фото / 02',description:'Второй кадр карусели',defaultSrc:'assets/instagram/ig-live-02.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-03',title:'Живые фото / 03',description:'Третий кадр карусели',defaultSrc:'assets/instagram/ig-live-03.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-04',title:'Живые фото / 04',description:'Четвёртый кадр карусели',defaultSrc:'assets/instagram/ig-live-04.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-05',title:'Живые фото / 05',description:'Пятый кадр карусели',defaultSrc:'assets/instagram/ig-live-05.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-06',title:'Живые фото / 06',description:'Шестой кадр карусели',defaultSrc:'assets/instagram/ig-live-06.jpg',recommended:'1200×1600 px'},
+  {slot:'live-photo-07',title:'Живые фото / 07',description:'Седьмой кадр карусели',defaultSrc:'assets/instagram/ig-live-07.jpg',recommended:'1200×1600 px'},
+];
+
 function initLogin(){const form=$('#loginForm');if(!form)return;if(window.VRAuth?.isAdmin()){location.href='admin.html';return}form.addEventListener('submit',e=>{e.preventDefault();const u=$('#loginUser').value.trim(),p=$('#loginPass').value;if(window.VRAuth?.login(u,p)){toast('Вход выполнен');setTimeout(()=>location.href='admin.html',350)}else{$('#loginError').textContent='Неверный логин или пароль';form.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:260})}})}
 function initAdmin(){
   if(!$('#adminRoot'))return;if(!window.VRAuth?.isAdmin()){location.replace('login.html');return}
@@ -327,6 +394,20 @@ function initAdmin(){
 
   let heroPreviewUrls=[];
   const clearHeroPreviewUrls=()=>{heroPreviewUrls.forEach(u=>URL.revokeObjectURL(u));heroPreviewUrls=[]};
+  let faviconPreviewUrl='';
+  const clearFaviconPreviewUrl=()=>{if(faviconPreviewUrl){URL.revokeObjectURL(faviconPreviewUrl);faviconPreviewUrl=''}};
+  const initAdminTabs=()=>{
+    const tabs=$$('[data-admin-target]');
+    const panels=$$('[data-admin-panel]', $('#adminRoot'));
+    if(!tabs.length||!panels.length)return;
+    const openTab=name=>{
+      tabs.forEach(btn=>btn.classList.toggle('active',btn.dataset.adminTarget===name));
+      panels.forEach(panel=>panel.classList.toggle('is-active',panel.dataset.adminPanel===name));
+      localStorage.setItem('vr_admin_tab',name);
+    };
+    tabs.forEach(btn=>btn.addEventListener('click',()=>openTab(btn.dataset.adminTarget)));
+    openTab(localStorage.getItem('vr_admin_tab')||'hero');
+  };
   const renderHeroMedia=async()=>{
     if(!$('#heroObjectPreview'))return;
     clearHeroPreviewUrls();
@@ -369,6 +450,64 @@ function initAdmin(){
     }catch(e){if(err)err.textContent='Не удалось сохранить объект баннера';console.error(e)}
   };
 
+  const renderFaviconPreview=async()=>{
+    const img=$('#faviconPreview'), state=$('#faviconState'); if(!img)return;
+    clearFaviconPreviewUrl();
+    try{
+      const rec=window.VRMedia?.assetGet?await window.VRMedia.assetGet('site-favicon'):null;
+      if(rec?.blob){faviconPreviewUrl=window.VRMedia.objectURL(rec); img.src=faviconPreviewUrl; state&&(state.textContent='CUSTOM')}
+      else {img.src='assets/logos/logo-black-mark.png'; state&&(state.textContent='DEFAULT')}
+    }catch(e){img.src='assets/logos/logo-black-mark.png'; state&&(state.textContent='DEFAULT')}
+  };
+  const saveFaviconFile=async(file)=>{
+    const err=$('#faviconErrors'); if(err) err.textContent='';
+    if(!file || !window.VRMedia?.assetSet) return;
+    const isSvg=/\.svg$/i.test(file.name||'') || file.type==='image/svg+xml';
+    const isIco=/\.ico$/i.test(file.name||'') || file.type==='image/x-icon' || file.type==='image/vnd.microsoft.icon';
+    if(!/^image\//.test(file.type) && !isSvg && !isIco){ if(err) err.textContent='Для favicon используйте PNG, SVG, ICO, WEBP или JPG.'; return; }
+    try{
+      if(!isSvg && !isIco){ const d=await imageDims(file); if(d.width!==d.height){ if(err) err.textContent=`${file.name}: favicon лучше загружать квадратным (${d.width}×${d.height})`; return; } }
+      await window.VRMedia.assetSet('site-favicon', file);
+      await renderFaviconPreview();
+      await applyManagedFavicon();
+      toast('Favicon обновлён');
+    }catch(e){ console.error(e); if(err) err.textContent='Не удалось сохранить favicon'; }
+  };
+
+  const cmsPreviewUrls=[];
+  const clearCmsPreviewUrls=()=>{while(cmsPreviewUrls.length)URL.revokeObjectURL(cmsPreviewUrls.pop())};
+  const cmsCardHtml=meta=>`<article class="cms-media-card" data-cms-card="${meta.slot}"><div class="cms-media-preview"><img id="cmsPreview-${meta.slot}" src="${meta.defaultSrc}" alt="${meta.title}"></div><div class="cms-media-body"><div class="cms-media-top"><div><b>${meta.title}</b><span>${meta.description}</span></div><i id="cmsState-${meta.slot}">DEFAULT</i></div><div class="cms-media-meta">${meta.recommended}</div><div class="cms-media-actions"><label class="tiny-btn hero-file-btn">Загрузить<input type="file" accept="image/jpeg,image/png,image/webp,image/jpg" data-cms-input="${meta.slot}" hidden></label><button class="tiny-btn" type="button" data-cms-reset="${meta.slot}">Сбросить</button></div></div></article>`;
+  const renderCmsManagersSkeleton=()=>{
+    const banners=$('#bannerMediaGrid'); if(banners) banners.innerHTML=HOME_BANNER_SLOTS.map(cmsCardHtml).join('');
+    const carousel=$('#carouselMediaGrid'); if(carousel) carousel.innerHTML=LIVE_CAROUSEL_SLOTS.map(cmsCardHtml).join('');
+  };
+  const renderCmsManagedPreviews=async()=>{
+    clearCmsPreviewUrls();
+    for(const meta of [...HOME_BANNER_SLOTS,...LIVE_CAROUSEL_SLOTS]){
+      const img=$(`#cmsPreview-${meta.slot}`),state=$(`#cmsState-${meta.slot}`);
+      if(!img) continue;
+      try{
+        const rec=window.VRMedia?.assetGet?await window.VRMedia.assetGet(meta.slot):null;
+        if(rec?.blob){const u=window.VRMedia.objectURL(rec);cmsPreviewUrls.push(u);img.src=u;state&&(state.textContent='CUSTOM')} else {img.src=meta.defaultSrc;state&&(state.textContent='DEFAULT')}
+      }catch(e){img.src=meta.defaultSrc;state&&(state.textContent='DEFAULT')}
+    }
+  };
+  const saveManagedAsset=async(meta,file)=>{
+    if(!file || !window.VRMedia?.assetSet) return;
+    if(!/^image\/(jpeg|png|webp|jpg)$/.test(file.type)){toast('Используйте JPG, PNG или WEBP');return}
+    try{
+      const d=await imageDims(file);
+      if(Math.max(d.width,d.height)<900){toast('Лучше использовать изображение не меньше 900 px по большей стороне');return}
+      await window.VRMedia.assetSet(meta.slot,file);
+      await renderCmsManagedPreviews();
+      toast(`Фото обновлено: ${meta.title}`)
+    }catch(e){console.error(e);toast('Не удалось сохранить фото')}
+  };
+  const bindCmsManagerEvents=()=>{
+    $$('[data-cms-input]').forEach(input=>input.addEventListener('change',async e=>{const meta=[...HOME_BANNER_SLOTS,...LIVE_CAROUSEL_SLOTS].find(x=>x.slot===input.dataset.cmsInput);const f=e.target.files?.[0];if(meta&&f)await saveManagedAsset(meta,f);e.target.value=''}));
+    $$('[data-cms-reset]').forEach(btn=>btn.addEventListener('click',async()=>{const meta=[...HOME_BANNER_SLOTS,...LIVE_CAROUSEL_SLOTS].find(x=>x.slot===btn.dataset.cmsReset);if(!meta || !window.VRMedia?.assetRemove)return;await window.VRMedia.assetRemove(meta.slot);await renderCmsManagedPreviews();toast(`Сброшено: ${meta.title}`)}));
+  };
+
   const renderMedia=async productId=>{
     const box=$('#pImagePreview');if(!box)return;clearPreviewUrls();
     let existing=[];try{existing=productId&&window.VRMedia?await window.VRMedia.get(productId):[]}catch(e){}
@@ -406,7 +545,14 @@ function initAdmin(){
   ['#heroObjType','#heroObjScale','#heroObjOffsetY','#heroObjRotateY','#heroObjShadow','#heroObjGlow','#heroObjSpeed'].forEach(sel=>$(sel)?.addEventListener('input',saveHeroSettingsFromUI));
   ['#heroObjType'].forEach(sel=>$(sel)?.addEventListener('change',saveHeroSettingsFromUI));
 
-  render();renderMedia('');renderHeroMedia();updateHeroSettingsUI();
+  $('#faviconInput')?.addEventListener('change',async e=>{const f=e.target.files?.[0]; if(f) await saveFaviconFile(f); e.target.value=''});
+  $('#faviconReset')?.addEventListener('click',async()=>{ if(window.VRMedia?.assetRemove){ await window.VRMedia.assetRemove('site-favicon'); await renderFaviconPreview(); await applyManagedFavicon(); toast('Стандартный favicon восстановлен'); } });
+
+  initAdminTabs();
+  renderCmsManagersSkeleton();bindCmsManagerEvents();
+  render();renderMedia('');renderHeroMedia();renderCmsManagedPreviews();renderFaviconPreview();updateHeroSettingsUI();
   new MutationObserver(()=>renderHeroMedia()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  addEventListener('beforeunload',()=>{clearCmsPreviewUrls();clearHeroPreviewUrls();clearPreviewUrls();clearFaviconPreviewUrl()},{once:true});
 }
-document.addEventListener('DOMContentLoaded',()=>{themeInit();authUI();nav();updateCartCount();reveals();cursor();intro();initTee();initInstagramGallery();initHome();initCatalog();initProduct();initLogin();initAdmin()});
+function initCookies(){const box=$('#vrCookie'),modal=$('#cookieModal');if(!box)return;if(localStorage.getItem('vr_cookies')){box.remove();return}$('#cookieAccept')?.addEventListener('click',()=>{localStorage.setItem('vr_cookies','all');box.remove()});$('#cookieSettings')?.addEventListener('click',()=>modal?.classList.add('open'));$('#cookieSave')?.addEventListener('click',()=>{localStorage.setItem('vr_cookies','custom');box.remove();modal?.classList.remove('open')})}
+document.addEventListener('DOMContentLoaded',async()=>{themeInit();authUI();nav();initCookies();await applyManagedFavicon();updateCartCount();reveals();cursor();intro();initTee();await hydrateManagedPageAssets();initInstagramGallery();initHome();initCatalog();initProduct();initLogin();initAdmin()});
