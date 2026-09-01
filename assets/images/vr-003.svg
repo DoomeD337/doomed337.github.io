@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+    <rect width="900" height="1200" fill="#0b0b0b"/>
+    <g opacity=".18"><path d="M0 170H900M0 1030H900" stroke="#666666"/><path d="M120 0V1200M780 0V1200" stroke="#666666"/></g>
+    <path d="M290 250 L170 330 L225 465 L300 430 L300 930 Q450 985 600 930 L600 430 L675 465 L730 330 L610 250 Q560 220 525 210 Q490 265 450 265 Q410 265 375 210 Q340 220 290 250Z" fill="none" stroke="#f3f3f3" stroke-width="6"/>
+    <g><circle cx="360" cy="410" r="108" fill="none" stroke="#f3f3f3" stroke-width="5" opacity=".9"/></g>
+    <text x="450" y="730" text-anchor="middle" fill="#f3f3f3" font-size="38" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="7">ВРОДЕ РОВНО</text>
+    <text x="450" y="785" text-anchor="middle" fill="#666666" font-size="20" font-family="Arial, Helvetica, sans-serif" letter-spacing="5">DROP 03</text>
+    </svg>
