@@ -13,38 +13,73 @@
   <div class="hero-scanlines" aria-hidden="true"></div>
   <div class="hero-flash" aria-hidden="true"></div>
   <div class="hero-corner hero-corner-a"><span>VR / SIGNAL 001</span><span>53.201° / 35.000°</span></div>
-  <div class="hero-corner hero-corner-b"><span>INTERACTIVE GARMENT</span><span id="heroFps">REALTIME / 60</span></div>
+  <div class="hero-corner hero-corner-b"><span>AUTONOMOUS MONOGRAM</span><span id="heroFps">REALTIME / 60</span></div>
   <div class="hero-word hero-word-a glitch-text" data-text="ВРОДЕ">ВРОДЕ</div>
   <div class="hero-word hero-word-b glitch-text" data-text="РОВНО">РОВНО</div>
   <div class="hero-centerline" aria-hidden="true"></div>
   <div class="hero-stage-wrap">
     <div class="tee-stage experimental-stage" id="teeStage">
       <div class="tee-halo halo-a" aria-hidden="true"></div><div class="tee-halo halo-b" aria-hidden="true"></div><div class="tee-halo halo-c" aria-hidden="true"></div>
-      <div class="tee-object" id="teeObject">
-        <img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(-15px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(-10px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(-5px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(0px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(5px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(10px)"><img class="tee-depth" src="assets/shirt-silhouette.svg" alt="" style="transform:translateZ(15px)">
-        <img class="tee-face tee-front" src="assets/shirt-front.svg" alt="3D футболка ВРОДЕ РОВНО"><img class="tee-face tee-back" src="assets/shirt-back.svg" alt="Обратная сторона футболки ВРОДЕ РОВНО">
-        <div class="tee-glitch-stack" id="teeGlitchStack" aria-hidden="true"></div>
+      <div class="tee-object hero-object-stage" id="teeObject">
+        <div class="hero-object-orbit orbit-a" aria-hidden="true"></div>
+        <div class="hero-object-orbit orbit-b" aria-hidden="true"></div>
+        <div class="hero-object-core">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(-18px)">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(-12px)">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(-6px)">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(0px)">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(6px)">
+          <img class="hero-object-depth" src="assets/hero-object-dark.png" alt="" style="transform:translateZ(12px)">
+          <img class="hero-object-face" id="heroObjectFace" src="assets/hero-object-dark.png" alt="Монограмма ВР — главный объект баннера">
+          <div class="tee-glitch-stack" id="teeGlitchStack" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </div>
   <div class="hero-interface">
-    <div class="hero-intro-copy"><div class="eyebrow">Independent clothing brand / Kursk / 2026</div><p>Сцена живёт сама. Наведи курсор или зажми экран — и перехвати управление сигналом.</p></div>
-    <button class="hold-trigger" id="holdTrigger" type="button" aria-label="Зажмите, чтобы усилить эффект">
-      <span class="hold-icon"><i></i></span><span class="hold-label"><b id="holdLabel">ЗАЖМИ И ДЕРЖИ</b><small id="holdStatus">HOLD TO DISTORT / 00%</small></span>
-    </button>
-    <div class="hold-progress"><i id="holdProgress"></i></div>
+    <div class="hero-intro-copy"><div class="eyebrow">Independent clothing brand / Kursk / 2026</div><p>Сцена работает автоматически: плавный motion, выраженные glitch-волны и живое движение монограммы без действий пользователя.</p></div>
+    <div class="auto-signal" aria-label="Автоматическая анимация включена">
+      <span class="auto-signal-icon"><i></i><i></i><i></i></span>
+      <span class="auto-signal-copy"><b id="signalLabel">AUTO OBJECT / ON</b><small id="signalStatus">GLITCH CYCLE / IDLE</small></span>
+    </div>
+    <div class="signal-progress"><i id="signalProgress"></i></div>
     <div class="hero-links"><a href="catalog.html">CATALOG ↗</a><a href="about.html">ABOUT ↗</a></div>
   </div>
-  <div class="hero-microcopy" id="heroMicrocopy">AUTO SIGNAL / MOVE / HOLD</div>
+  <div class="hero-microcopy" id="heroMicrocopy">AUTONOMOUS / MONOGRAM SIGNAL</div>
 </section>
-<div class="marquee"><div class="marquee-track"><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Move the object</span><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Move the object</span></div></div>
-<section class="section"><div class="container"><div class="section-head reveal"><div><div class="eyebrow">02 / selected</div><h2 class="section-title">Свежий<br>дроп</h2></div><p class="section-meta">Минимум цвета, максимум характера. Каталог связан с локальной админ‑панелью: изменения товаров сразу отображаются на витрине в этом браузере.</p></div><div class="product-grid" id="homeProducts"></div><div style="margin-top:26px"><a class="btn outline" href="catalog.html">Весь каталог</a></div></div></section>
-<section class="brand-strip"><div class="brand-mark-panel reveal"><img class="mark-black" src="assets/logos/logo-black-mark.png" alt="Монограмма ВРОДЕ РОВНО"><img class="mark-white" src="assets/logos/logo-white-mark.png" alt="Монограмма ВРОДЕ РОВНО"></div><div class="brand-copy reveal"><div class="micro">03 / manifesto</div><p class="quote">Не пытаемся быть идеально ровными. В этом и весь смысл.</p><div><a class="btn outline" href="about.html">Читать о бренде →</a></div></div></section>
+<div class="marquee" aria-label="ВРОДЕ РОВНО — бегущая строка"><div class="marquee-track"><div class="marquee-group"><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Signal object</span><span>Independent clothing</span><span>Zero falsehood</span><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Signal object</span><span>Independent clothing</span><span>Zero falsehood</span></div><div class="marquee-group" aria-hidden="true"><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Signal object</span><span>Independent clothing</span><span>Zero falsehood</span><span>Новый дроп</span><span>Вроде просто</span><span>Ровно настолько</span><span>Signal object</span><span>Independent clothing</span><span>Zero falsehood</span></div></div></div>
+<section class="section"><div class="container"><div class="section-head reveal"><div><div class="eyebrow">02 / selected</div><h2 class="section-title">Свежий<br>дроп</h2></div><p class="section-meta">Минимум цвета, максимум характера. Каталог связан с локальной админ‑панелью: изменения товаров сразу отображаются на витрине в этом браузере.</p></div><div class="home-catalog-stack"><div class="product-grid" id="homeProducts"></div><div class="catalog-cta"><a class="btn outline" href="catalog.html">Весь каталог</a></div></div></div></section>
+<section class="brand-strip campaign-manifesto">
+  <div class="brand-mark-panel brand-photo-panel reveal">
+    <img class="brand-photo" src="assets/instagram/ig-live-04.jpg" alt="ВРОДЕ РОВНО — чёрная футболка, streetwear">
+    <div class="brand-photo-shade"></div>
+    <img class="brand-photo-monogram" src="assets/logos/logo-white-mark.png" alt="ВР">
+    <div class="brand-photo-meta"><span>CAMPAIGN / 01</span><span>VRODE ROVNO</span></div>
+  </div>
+  <div class="brand-copy reveal">
+    <div class="micro">03 / manifesto</div>
+    <p class="quote">Не пытаемся быть идеально ровными. В этом и весь смысл.</p>
+    <div><a class="btn outline" href="about.html">Читать о бренде →</a></div>
+  </div>
+</section>
 <section class="section"><div class="container"><div class="section-head reveal"><div><div class="eyebrow">04 / details</div><h2 class="section-title">Вещи<br>говорят</h2></div><p class="section-meta">Большие формы, чистая типографика, линейная графика и детали, которые не спорят с самой вещью.</p></div><div class="editorial"><div class="card reveal"><span class="card-num">01</span><h3>Графика без визуального шума</h3><p>Контрастные принты, читаемая композиция и достаточное количество воздуха.</p></div><div class="card reveal"><span class="card-num">02</span><h3>Свободный силуэт</h3><p>Одежда должна работать в движении, а не только на фотографии.</p></div><div class="card reveal"><span class="card-num">03</span><h3>Монохром. Но не плоский.</h3><p>Чёрный, графит, серый, белый — одна система с разной глубиной и настроением.</p></div></div></div></section>
+<section class="campaign-wall" aria-label="ВРОДЕ РОВНО — кампейн">
+  <a class="campaign-frame campaign-frame--main reveal" href="catalog.html">
+    <img src="assets/instagram/ig-live-07.jpg" alt="ВРОДЕ РОВНО — образ с белой футболкой">
+    <span class="campaign-no">CAMPAIGN / 02</span>
+    <span class="campaign-copy"><b>WEAR<br>WHAT<br>STAYS.</b><small>NEW DROP / VRODE ROVNO</small></span>
+    <i class="campaign-corner tl"></i><i class="campaign-corner tr"></i><i class="campaign-corner bl"></i><i class="campaign-corner br"></i>
+  </a>
+  <a class="campaign-frame campaign-frame--side reveal" href="catalog.html">
+    <img src="assets/instagram/ig-live-01.jpg" alt="ВРОДЕ РОВНО — белая футболка на улице">
+    <span class="campaign-no">STREET / 03</span>
+    <span class="campaign-side-copy">ВРОДЕ<br>РОВНО</span>
+  </a>
+</section>
 <section class="social-gallery section" id="instagramGallery">
   <div class="container social-head reveal">
     <div>
-      <div class="eyebrow">05 / instagram</div>
+      <div class="eyebrow">05 / live</div>
       <h2 class="section-title glitch-heading">ЖИВОЙ<br>КАДР</h2>
     </div>
     <div class="social-meta">
@@ -54,7 +89,11 @@
   </div>
 
   <div class="social-rail-wrap reveal">
-    <div class="social-rail" id="socialRail">
+    <div class="social-rail-controls" aria-label="Управление галереей">
+      <button type="button" id="socialPrev" aria-label="Назад">←</button>
+      <button type="button" id="socialNext" aria-label="Вперёд">→</button>
+    </div>
+    <div class="social-rail" id="socialRail" tabindex="0" aria-label="Горизонтальная галерея фотографий">
       <button class="social-shot social-shot--wide social-shot--feature" data-ig="0" aria-label="Открыть фото 1"><img src="assets/instagram/ig-live-01.jpg" alt="ВРОДЕ РОВНО — девушка в белой футболке на улице" loading="lazy"><span class="social-shot-top">STREET / MOOD</span><span class="social-shot-title">НАСТРОЕНИЕ</span><span class="social-shot-code">IG / 001</span></button>
       <button class="social-shot social-shot--tall" data-ig="1" aria-label="Открыть фото 2"><img src="assets/instagram/ig-live-02.jpg" alt="ВРОДЕ РОВНО — девушка в белой футболке на ярком фоне" loading="lazy"><span class="social-shot-top">DROP / 02</span><span class="social-shot-title">NO RULES</span><span class="social-shot-code">IG / 002</span></button>
       <button class="social-shot" data-ig="2" aria-label="Открыть фото 3"><img src="assets/instagram/ig-live-03.jpg" alt="ВРОДЕ РОВНО — девушка с камерой в белой футболке" loading="lazy"><span class="social-shot-top">CAMERA / 03</span><span class="social-shot-title">MALIBU 1965</span><span class="social-shot-code">IG / 003</span></button>
@@ -63,7 +102,7 @@
       <button class="social-shot social-shot--tall" data-ig="5" aria-label="Открыть фото 6"><img src="assets/instagram/ig-live-06.jpg" alt="ВРОДЕ РОВНО — чёрная футболка с графикой на спине" loading="lazy"><span class="social-shot-top">GRAPHIC / 06</span><span class="social-shot-title">LINE ART</span><span class="social-shot-code">IG / 006</span></button>
       <button class="social-shot social-shot--wide" data-ig="6" aria-label="Открыть фото 7"><img src="assets/instagram/ig-live-07.jpg" alt="ВРОДЕ РОВНО — белая футболка с принтом и красная куртка" loading="lazy"><span class="social-shot-top">LOOK / 07</span><span class="social-shot-title">FREEDOM</span><span class="social-shot-code">IG / 007</span></button>
     </div>
-    <div class="social-drag-hint"><span>DRAG / SCROLL</span><i><b id="socialProgress"></b></i><span>INSTAGRAM FEED</span></div>
+    <div class="social-drag-hint"><span>DRAG / SCROLL</span><i><b id="socialProgress"></b></i><span>LIVE PHOTOS</span></div>
   </div>
 
   <div class="container social-bottom reveal">
@@ -83,4 +122,4 @@
   </div>
   <button class="ig-lightbox-nav next" id="igNext" aria-label="Следующее фото">→</button>
 </div>
-</main><footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-brand"><img class="white" src="assets/logos/logo-white-mark.png" alt=""><img class="black" src="assets/logos/logo-black-mark.png" alt=""><div class="footer-brand-text">ВРОДЕ<br>РОВНО</div></div><div class="footer-col"><b>Навигация</b><a href="catalog.html">Каталог</a><a href="about.html">О бренде</a><a href="delivery.html">Доставка</a></div><div class="footer-col"><b>Связь</b><a href="contacts.html">Контакты</a><a href="https://www.instagram.com/vrode_rovno/" target="_blank" rel="noopener">Instagram</a><a href="#">Telegram</a><a href="#">VK</a></div></div><div class="footer-bottom"><span>© 2026 ВРОДЕ РОВНО</span><span>Independent clothing brand</span></div></div></footer><script src="assets/auth.js"></script><script src="assets/catalog.js"></script><script src="assets/media.js"></script><script src="assets/app.js"></script></body></html>
+</main><footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-brand"><a href="index.html" aria-label="ВРОДЕ РОВНО"><img class="footer-mark" src="assets/logos/logo-black-mark.png" alt="ВР"></a></div><div class="footer-col"><b>Навигация</b><a href="catalog.html">Каталог</a><a href="about.html">О бренде</a><a href="delivery.html">Доставка</a></div><div class="footer-col"><b>Связь</b><a href="contacts.html">Контакты</a><a href="https://www.instagram.com/vrode_rovno/" target="_blank" rel="noopener">Instagram</a><a href="#">Telegram</a><a href="https://vk.ru/vrovno" target="_blank" rel="noopener">VK</a></div></div><div class="footer-bottom"><span>© 2026 ВРОДЕ РОВНО</span><span>Independent clothing brand</span></div></div></footer><script src="assets/auth.js"></script><script src="assets/catalog.js"></script><script src="assets/media.js"></script><script src="assets/app.js"></script></body></html>

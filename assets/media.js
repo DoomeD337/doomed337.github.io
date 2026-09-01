@@ -1,7 +1,8 @@
 (() => {
   const DB_NAME='vrode-rovno-media';
-  const DB_VERSION=1;
+  const DB_VERSION=2;
   const STORE='productImages';
+  const HERO_STORE='heroAssets';
   let dbPromise;
 
   const open=()=>{
@@ -14,6 +15,9 @@
         if(!db.objectStoreNames.contains(STORE)){
           const st=db.createObjectStore(STORE,{keyPath:'key'});
           st.createIndex('productId','productId',{unique:false});
+        }
+        if(!db.objectStoreNames.contains(HERO_STORE)){
+          db.createObjectStore(HERO_STORE,{keyPath:'slot'});
         }
       };
       req.onsuccess=()=>resolve(req.result);
@@ -66,7 +70,28 @@
   }
 
   async function count(productId){ return (await get(productId)).length; }
-  const objectURL=rec=>rec?.blob ? URL.createObjectURL(rec.blob) : '';
 
-  window.VRMedia={get,add,remove,removeProduct,makeCover,count,objectURL};
+  async function heroGet(slot){
+    const db=await open();
+    const tx=db.transaction(HERO_STORE,'readonly');
+    return await reqDone(tx.objectStore(HERO_STORE).get(slot));
+  }
+
+  async function heroSet(slot,file){
+    if(!slot || !file) return;
+    const db=await open();
+    const tx=db.transaction(HERO_STORE,'readwrite');
+    tx.objectStore(HERO_STORE).put({slot,blob:file,name:file.name||slot,type:file.type||'image/png',size:file.size||0,updatedAt:Date.now()});
+    await txDone(tx);
+  }
+
+  async function heroRemove(slot){
+    const db=await open();
+    const tx=db.transaction(HERO_STORE,'readwrite');
+    tx.objectStore(HERO_STORE).delete(slot);
+    await txDone(tx);
+  }
+
+  const objectURL=rec=>rec?.blob ? URL.createObjectURL(rec.blob) : '';
+  window.VRMedia={get,add,remove,removeProduct,makeCover,count,objectURL,heroGet,heroSet,heroRemove};
 })();

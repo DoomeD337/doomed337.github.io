@@ -6,6 +6,7 @@ function themeInit(){const saved=localStorage.getItem('vr_theme');const pref=mat
 function authUI(){if(window.VRAuth?.isAdmin())document.body.classList.add('is-admin');$('#accountBtn')?.addEventListener('click',()=>location.href=window.VRAuth?.isAdmin()?'admin.html':'login.html')}
 function nav(){const menu=$('#menuBtn'),mobile=$('#mobileNav');menu?.addEventListener('click',()=>mobile.classList.toggle('open'));const cartBtn=$('#cartBtn'),drawer=$('#cartDrawer'),overlay=$('#overlay'),close=$('#cartClose');const toggleCart=open=>{drawer?.classList.toggle('open',open);overlay?.classList.toggle('show',open);if(open)renderCart()};cartBtn?.addEventListener('click',()=>toggleCart(true));close?.addEventListener('click',()=>toggleCart(false));overlay?.addEventListener('click',()=>toggleCart(false))}
 function productFallback(id){return /^vr-00[1-8]$/.test(id||'')?`assets/images/${id}.svg`:'assets/product-placeholder.svg'}
+function defaultHeroObjectSrc(){return document.documentElement.dataset.theme==='light'?'assets/hero-object-light.png':'assets/hero-object-dark.png'}
 async function hydrateProductMedia(root=document){
   if(!window.VRMedia)return;
   const nodes=$$('img[data-product-media]',root);
@@ -30,8 +31,13 @@ function renderCart(){
   total.textContent=money(sum);hydrateProductMedia(box);
 }
 function reveals(){
+  // Admin is a work surface: no decorative reveal/glitch animation there.
+  if($('#adminRoot')){
+    $$('.reveal').forEach(el=>el.classList.add('visible'));
+    return;
+  }
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const glitchSelectors='.section-head,.product-card,.brand-mark-panel,.brand-copy,.editorial .card,.info-box,.auth-card,.admin-panel,.stat,.product-detail,.page-hero,.footer-brand';
+  const glitchSelectors='.section-head,.product-card,.brand-mark-panel,.brand-copy,.editorial .card,.info-box,.auth-card,.product-detail,.page-hero,.footer-brand';
   $$(glitchSelectors).forEach(el=>{
     el.classList.add('glitch-block');
     if(!el.dataset.glitchReady){
@@ -41,7 +47,7 @@ function reveals(){
       }
     }
   });
-  $$('.section-title,.page-title,.card h3,.quote,.product-detail h1,.admin-title,.auth-card h1').forEach(el=>el.classList.add('glitch-heading'));
+  $$('.section-title,.page-title,.card h3,.quote,.product-detail h1,.auth-card h1').forEach(el=>el.classList.add('glitch-heading'));
   if(!window.__vrRevealIO){
     window.__vrRevealIO=new IntersectionObserver(es=>es.forEach(e=>{
       if(e.isIntersecting){
@@ -94,120 +100,275 @@ async function initProduct(){
   }catch(e){$('#productPhotoCount').textContent='—'}
 }
 function intro(){const x=$('#pageIntro');if(!x)return;if(sessionStorage.getItem('vr_intro_seen')){x.remove();return}sessionStorage.setItem('vr_intro_seen','1');setTimeout(()=>x.classList.add('leave'),800);setTimeout(()=>x.classList.add('gone'),1650)}
-function initTee(){
+async function initTee(){
   const hero=$('#heroExperiment'),stage=$('#teeStage'),obj=$('#teeObject'),canvas=$('#pulseCanvas'),stack=$('#teeGlitchStack');
   if(!stage||!obj)return;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  let tx=4,ty=-10,cx=4,cy=-10,flip=0,drag=false,lastX=0,lastY=0,idle=0;
-  let holding=false,holdStart=0,intensity=0,targetIntensity=0,completed=false,lastGlitch=0,pointer={x:.5,y:.5};
-  let autoActive=false,autoStart=0,autoDuration=2600,autoPeak=.82,autoTimer=0,lastHuman=performance.now();
-  const progress=$('#holdProgress'),status=$('#holdStatus'),label=$('#holdLabel'),micro=$('#heroMicrocopy');
-  if(stack){for(let i=0;i<10;i++){const im=document.createElement('img');im.className='glitch-slice';im.src='assets/shirt-front.svg';im.alt='';const top=i*9.7,bottom=Math.max(0,100-(top+11+Math.random()*6));im.style.clipPath=`inset(${top}% 0 ${bottom}% 0)`;stack.appendChild(im)}}
-  const slices=stack?[...stack.children]:[];
-  const human=()=>{lastHuman=performance.now();if(autoActive)stopAuto(false)};
-  const setFromPointer=(x,y)=>{const r=stage.getBoundingClientRect();pointer.x=Math.max(0,Math.min(1,(x-r.left)/r.width));pointer.y=Math.max(0,Math.min(1,(y-r.top)/r.height));tx=(pointer.y-.5)*-18;ty=(pointer.x-.5)*34+flip};
-  const beginHold=()=>{if(reduced)return;human();holding=true;holdStart=performance.now();targetIntensity=.12;hero?.classList.add('is-holding');label&&(label.textContent='НЕ ОТПУСКАЙ');micro&&(micro.textContent='SIGNAL BENDING / KEEP HOLDING')};
-  const endHold=()=>{holding=false;targetIntensity=0;hero?.classList.remove('is-holding');if(!completed){label&&(label.textContent='ЗАЖМИ И ДЕРЖИ');micro&&(micro.textContent='AUTO SIGNAL / MOVE / HOLD')}};
-  stage.addEventListener('pointermove',e=>{human();idle=0;setFromPointer(e.clientX,e.clientY);if(drag){ty+=e.clientX-lastX;tx-=(e.clientY-lastY)*.35;lastX=e.clientX;lastY=e.clientY}});
-  stage.addEventListener('pointerdown',e=>{human();drag=true;lastX=e.clientX;lastY=e.clientY;stage.setPointerCapture?.(e.pointerId);beginHold()});
-  stage.addEventListener('pointerup',()=>{drag=false;endHold()});stage.addEventListener('pointercancel',()=>{drag=false;endHold()});stage.addEventListener('pointerleave',()=>{drag=false;if(holding)endHold();tx=3;ty=flip-10});
-  $('#holdTrigger')?.addEventListener('pointerdown',e=>{e.preventDefault();beginHold()});$('#holdTrigger')?.addEventListener('pointerup',endHold);$('#holdTrigger')?.addEventListener('pointerleave',()=>holding&&endHold());
-  const complete=()=>{if(completed)return;completed=true;hero?.classList.add('completed');setTimeout(()=>hero?.classList.remove('completed'),700);setTimeout(()=>{completed=false;if(!holding&&!autoActive){label&&(label.textContent='ЗАЖМИ И ДЕРЖИ');micro&&(micro.textContent='AUTO SIGNAL / MOVE / HOLD')}},1600)};
+  const face=$('#heroObjectFace',obj)||$('.hero-object-face',obj);
+  const signalProgress=$('#signalProgress'),signalStatus=$('#signalStatus'),signalLabel=$('#signalLabel'),micro=$('#heroMicrocopy');
+  const heroUrls=[];
+  let objectSrc=defaultHeroObjectSrc();
+  let hasCustomObject=false;
+  const defaultCfg={type:'monogram',scale:100,offsetY:0,rotateY:0,shadow:70,glow:20,speed:100};
+  const readCfg=()=>{try{return {...defaultCfg,...JSON.parse(localStorage.getItem('vr_hero_object_settings')||'{}')}}catch(e){return {...defaultCfg}}};
+  const cfg=readCfg();
+  if(window.VRMedia){
+    try{
+      const rec=await window.VRMedia.heroGet('object');
+      if(rec?.blob){objectSrc=window.VRMedia.objectURL(rec);heroUrls.push(objectSrc);hasCustomObject=true}
+    }catch(e){console.warn('Hero object media unavailable',e)}
+  }
+  const applyObjectSrc=src=>{$$('.hero-object-face,.hero-object-depth',obj).forEach(im=>im.src=src)};
+  const rebuildSlices=src=>{if(!stack)return;stack.innerHTML='';for(let i=0;i<14;i++){const im=document.createElement('img');im.className='glitch-slice';im.src=src;im.alt='';const top=i*7.05,bottom=Math.max(0,100-(top+8.6));im.style.clipPath=`inset(${top}% 0 ${bottom}% 0)`;stack.appendChild(im)}};
+  applyObjectSrc(objectSrc);
+  addEventListener('beforeunload',()=>heroUrls.forEach(u=>URL.revokeObjectURL(u)),{once:true});
+  obj.style.setProperty('--hero-shadow',String((cfg.shadow??70)/100));
+  obj.style.setProperty('--hero-glow',String((cfg.glow??20)/100));
+
+  let tx=3,ty=-8,cx=3,cy=-8,pointer={x:.5,y:.5};
+  let intensity=0,targetIntensity=0,lastGlitch=0;
+  let autoActive=false,autoStart=0,autoDuration=3500,autoPeak=.62,autoTimer=0;
+  rebuildSlices(objectSrc);
+  let slices=stack?[...stack.children]:[];
+  const syncDefaultHeroTheme=()=>{if(hasCustomObject)return;const next=defaultHeroObjectSrc();if(next===objectSrc)return;objectSrc=next;applyObjectSrc(objectSrc);rebuildSlices(objectSrc);slices=stack?[...stack.children]:[]};
+  new MutationObserver(syncDefaultHeroTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  const setPointer=(x,y)=>{const r=stage.getBoundingClientRect();pointer.x=Math.max(0,Math.min(1,(x-r.left)/r.width));pointer.y=Math.max(0,Math.min(1,(y-r.top)/r.height));tx=(pointer.y-.5)*-7;ty=(pointer.x-.5)*12-6};
+  stage.addEventListener('pointermove',e=>setPointer(e.clientX,e.clientY),{passive:true});
+  stage.addEventListener('pointerleave',()=>{pointer={x:.5,y:.5};tx=3;ty=-8});
 
   const scheduleAuto=(first=false)=>{
     if(reduced)return;
     clearTimeout(autoTimer);
-    const delay=first?2400:7800+Math.random()*4200;
-    autoTimer=setTimeout(()=>{
-      if(document.hidden||holding||drag||performance.now()-lastHuman<5200){scheduleAuto(false);return}
-      startAuto();
-    },delay);
+    const delay=first?1500:2600+Math.random()*1400;
+    autoTimer=setTimeout(()=>{if(document.hidden){scheduleAuto(false);return}startAuto()},delay);
   };
   const startAuto=()=>{
-    if(reduced||holding||drag||autoActive)return;
-    autoActive=true;autoStart=performance.now();autoDuration=2300+Math.random()*1000;autoPeak=.68+Math.random()*.28;
-    hero?.classList.add('is-auto','is-holding');
-    label&&(label.textContent='AUTO DISTORT');micro&&(micro.textContent='AUTONOMOUS SIGNAL / DO NOT ADJUST');
-    // give each cycle its own slow rotation direction
-    const dir=Math.random()>.5?1:-1;ty+=dir*(14+Math.random()*12);tx=(Math.random()-.5)*10;
+    if(reduced||autoActive)return;
+    autoActive=true;autoStart=performance.now();autoDuration=3000+Math.random()*700;autoPeak=.82+Math.random()*.12;
+    hero?.classList.add('is-auto');
+    if(signalLabel)signalLabel.textContent='AUTO OBJECT / ACTIVE';
+    if(micro)micro.textContent='AUTONOMOUS / MONOGRAM FLOW';
   };
-  const stopAuto=(reschedule=true)=>{
-    if(!autoActive)return;
-    autoActive=false;targetIntensity=0;hero?.classList.remove('is-auto','is-holding');
-    label&&(label.textContent='ЗАЖМИ И ДЕРЖИ');micro&&(micro.textContent='AUTO SIGNAL / MOVE / HOLD');
-    if(reschedule)scheduleAuto(false);
+  const stopAuto=()=>{
+    autoActive=false;targetIntensity=0;hero?.classList.remove('is-auto');
+    if(signalLabel)signalLabel.textContent='AUTO OBJECT / ON';
+    if(signalStatus)signalStatus.textContent='GLITCH CYCLE / IDLE';
+    if(micro)micro.textContent='AUTONOMOUS / MONOGRAM SIGNAL';
+    scheduleAuto(false);
   };
-  scheduleAuto(true);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopAuto(false);clearTimeout(autoTimer)}else scheduleAuto(false)});
-
+  const smoothstep=t=>t*t*(3-2*t);
   function autoEnvelope(now){
     if(!autoActive)return 0;
     const t=Math.min(1,(now-autoStart)/autoDuration);
-    // cinematic envelope: quiet rise -> violent middle -> fragmented decay
-    let e;
-    if(t<.18)e=(t/.18)*.34;
-    else if(t<.58){const u=(t-.18)/.40;e=.34+Math.sin(u*Math.PI)*(.66*autoPeak)}
-    else{const u=(t-.58)/.42;e=(1-u)*(.46+.16*Math.sin(u*8*Math.PI));}
-    if(t>.42&&t<.52&&!completed)complete();
-    if(t>=1){stopAuto(true);return 0}
-    return Math.max(0,Math.min(1,e));
+    const rise=smoothstep(Math.min(1,t/.28));
+    const fall=1-smoothstep(Math.max(0,(t-.62)/.38));
+    const pulse=.92+.08*Math.sin(t*Math.PI*4.0);
+    const e=Math.max(0,Math.min(1,rise*fall*autoPeak*pulse));
+    if(t>=1){stopAuto();return 0}
+    return e;
+  }
+  scheduleAuto(true);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(autoTimer);autoActive=false;hero?.classList.remove('is-auto')}else scheduleAuto(true)});
+
+  function animateObject(nowRaw){
+    const speedMul=(cfg.speed??100)/100;
+    const now=nowRaw*speedMul;
+    const auto=autoEnvelope(nowRaw);
+    targetIntensity=auto;
+    intensity+=(targetIntensity-intensity)*.092;
+    hero?.style.setProperty('--glitch',intensity.toFixed(3));
+    hero?.classList.toggle('is-distorting',intensity>.035);
+    const cycle=autoActive?Math.min(1,(nowRaw-autoStart)/autoDuration):0;
+    if(signalProgress)signalProgress.style.width=(cycle*100).toFixed(1)+'%';
+    if(signalStatus)signalStatus.textContent=autoActive?`GLITCH CYCLE / ${String(Math.round(cycle*100)).padStart(2,'0')}%`:'GLITCH CYCLE / IDLE';
+
+    cx+=(tx-cx)*.035;cy+=(ty-cy)*.035;
+    const floatY=Math.sin(now/1280)*4.4+Math.sin(now/2600)*2.2;
+    const driftY=Math.sin(now/4200)*4.6;
+    const signalX=Math.sin(now/215)*intensity*5.8+Math.sin(now/470)*intensity*2.4;
+    const signalY=Math.cos(now/285)*intensity*2.2;
+    const rotX=cx+Math.sin(now/1600)*1.1+intensity*Math.sin(now/330)*2.1;
+    const rotY=(cfg.rotateY??0)+cy+driftY+intensity*Math.sin(now/405)*5.4;
+    const baseScale=(cfg.scale??100)/100;
+    const offsetY=(cfg.offsetY??0);
+    obj.style.transform=`translate3d(${signalX}px,${signalY+floatY+offsetY}px,0) rotateX(${rotX}deg) rotateY(${rotY}deg) skewX(${intensity*Math.sin(now/570)*.68}deg) scale(${baseScale*(1+intensity*.013)})`;
+
+    if(intensity>.035 && now-lastGlitch>58){
+      lastGlitch=now;
+      slices.forEach((s,i)=>{
+        const phase=now/170+i*1.37;
+        const amp=intensity*(i%4===0?34:(i%2===0?22:14));
+        s.style.transform=`translateX(${Math.sin(phase)*amp}px) scaleX(${1+Math.sin(phase*.63)*intensity*.035})`;
+        s.style.opacity=String(.06+intensity*(.28+.25*(.5+.5*Math.sin(phase*.8))));
+      });
+    }else if(intensity<.025){slices.forEach(s=>{s.style.transform='translateX(0)';s.style.opacity='0'})}
   }
 
-  function animateObject(now){
-    idle++;if(idle>240&&!drag&&!holding&&!autoActive)ty+=.025;
-    const held=holding?Math.min(1,(now-holdStart)/2300):0;
-    const auto=autoEnvelope(now);
-    if(holding)targetIntensity=Math.max(.12,held);else if(autoActive)targetIntensity=auto;else targetIntensity=0;
-    intensity+=(targetIntensity-intensity)*(autoActive?.18:.12);
-    hero?.style.setProperty('--glitch',intensity.toFixed(3));hero?.classList.toggle('is-distorting',intensity>.045);
-    const shown=holding?held:autoActive?auto:0;
-    if(progress)progress.style.width=(shown*100).toFixed(1)+'%';
-    if(status)status.textContent=autoActive?`AUTO DISTORT / ${String(Math.round(shown*100)).padStart(2,'0')}%`:`HOLD TO DISTORT / ${String(Math.round(held*100)).padStart(2,'0')}%`;
-    if(holding&&held>=1)complete();
-    cx+=(tx-cx)*.075;cy+=(ty-cy)*.075;
-    const shake=intensity*(autoActive?7.2:5),sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake*.55;
-    const breathe=Math.sin(now/1150)*3.6;
-    obj.style.transform=`translate3d(${sx}px,${sy+breathe}px,0) rotateX(${cx+intensity*Math.sin(now/71)*2.4}deg) rotateY(${cy+intensity*Math.sin(now/53)*5}deg) skewX(${intensity*Math.sin(now/37)*1.4}deg) scale(${1+intensity*.018})`;
-    if(intensity>.06 && now-lastGlitch>48){lastGlitch=now;slices.forEach((s,i)=>{const amp=intensity*(i%3===0?42:22);s.style.transform=`translateX(${(Math.random()-.5)*amp}px) scaleX(${1+(Math.random()-.5)*intensity*.08})`;s.style.opacity=String(.10+Math.random()*.58*intensity)});}else if(intensity<.03){slices.forEach(s=>{s.style.transform='translateX(0)';s.style.opacity='0'})}
-  }
-  // procedural canvas field: concentric geometry + signal particles + glitch streaks
-  if(canvas && !reduced){const ctx=canvas.getContext('2d',{alpha:true});let W=0,H=0,dpr=1,pts=[];const resize=()=>{dpr=Math.min(devicePixelRatio||1,1.6);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);const n=W<760?44:92;pts=Array.from({length:n},(_,i)=>({a:Math.random()*Math.PI*2,r:.12+Math.random()*.42,s:(.00005+Math.random()*.00013)*(i%2?1:-1),z:Math.random(),p:Math.random()*6.28}))};resize();addEventListener('resize',resize,{passive:true});
-    const draw=(now)=>{const light=document.documentElement.dataset.theme==='light';const fg=light?'11,11,11':'245,245,243';ctx.clearRect(0,0,W,H);const ox=(pointer.x-.5)*W*.035,oy=(pointer.y-.5)*H*.035,cx0=W*.5+ox,cy0=H*.49+oy,min=Math.min(W,H);ctx.save();ctx.translate(cx0,cy0);ctx.lineWidth=1;
-      for(let k=0;k<7;k++){const rr=min*(.13+k*.061)*(1+Math.sin(now*.00035+k)*.012);ctx.beginPath();ctx.strokeStyle=`rgba(${fg},${.045+k*.009+intensity*.065})`;const sides=6+k*2;for(let i=0;i<=sides;i++){let a=i/sides*Math.PI*2+now*(k%2?-.000018:.000014);let jitter=intensity*Math.sin(a*7+now*.015)*min*.006;let x=Math.cos(a)*(rr+jitter),y=Math.sin(a)*(rr+jitter);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
-      pts.forEach((p,i)=>{p.a+=p.s*(1+intensity*12);const rr=min*p.r*(1+Math.sin(now*.0007+p.p)*.04);let x=Math.cos(p.a)*rr,y=Math.sin(p.a)*rr*.74;const sz=.45+p.z*1.4+intensity*1.3;ctx.fillStyle=`rgba(${fg},${.16+p.z*.28+intensity*.3})`;ctx.fillRect(x,y,sz,sz);if(i%7===0){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x*(.72+intensity*.08),y*(.72+intensity*.08));ctx.strokeStyle=`rgba(${fg},${.035+intensity*.12})`;ctx.stroke()}});ctx.restore();
-      if(intensity>.08){const bars=Math.floor(1+intensity*11);for(let i=0;i<bars;i++){const y=Math.random()*H,h=1+Math.random()*Math.max(2,intensity*18);ctx.fillStyle=`rgba(${fg},${.025+Math.random()*.11*intensity})`;ctx.fillRect(0,y,W,h);if(Math.random()<intensity*.5){ctx.fillStyle=`rgba(${fg},${.04+intensity*.09})`;ctx.fillRect(Math.random()*W*.65,y,60+Math.random()*W*.3,1+Math.random()*3)}}}
+  if(canvas && !reduced){
+    const ctx=canvas.getContext('2d',{alpha:true});let W=0,H=0,dpr=1,pts=[];
+    const resize=()=>{dpr=Math.min(devicePixelRatio||1,1.6);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);const n=W<760?44:92;pts=Array.from({length:n},(_,i)=>({a:Math.random()*Math.PI*2,r:.12+Math.random()*.42,s:(.00005+Math.random()*.00013)*(i%2?1:-1),z:Math.random(),p:Math.random()*6.28}))};
+    resize();addEventListener('resize',resize,{passive:true});
+    const draw=nowRaw=>{const speedMul=(cfg.speed??100)/100;const now=nowRaw*speedMul;const light=document.documentElement.dataset.theme==='light';const fg=light?'11,11,11':'245,245,243';ctx.clearRect(0,0,W,H);const ox=(pointer.x-.5)*W*.025,oy=(pointer.y-.5)*H*.025,cx0=W*.5+ox,cy0=H*.49+oy,min=Math.min(W,H);ctx.save();ctx.translate(cx0,cy0);ctx.lineWidth=1;
+      for(let k=0;k<7;k++){const rr=min*(.13+k*.061)*(1+Math.sin(now*.00025+k)*.009);ctx.beginPath();ctx.strokeStyle=`rgba(${fg},${.042+k*.008+intensity*.04})`;const sides=6+k*2;for(let i=0;i<=sides;i++){let a=i/sides*Math.PI*2+now*(k%2?-.000012:.00001);let jitter=intensity*Math.sin(a*5+now*.006)*min*.0027;let x=Math.cos(a)*(rr+jitter),y=Math.sin(a)*(rr+jitter);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
+      pts.forEach((p,i)=>{p.a+=p.s*(1+intensity*4);const rr=min*p.r*(1+Math.sin(now*.0005+p.p)*.025);let x=Math.cos(p.a)*rr,y=Math.sin(p.a)*rr*.74;const sz=.45+p.z*1.35+intensity*.55;ctx.fillStyle=`rgba(${fg},${.13+p.z*.22+intensity*.13})`;ctx.fillRect(x,y,sz,sz);if(i%8===0){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x*.74,y*.74);ctx.strokeStyle=`rgba(${fg},${.028+intensity*.055})`;ctx.stroke()}});ctx.restore();
+      if(intensity>.055){for(let i=0;i<9;i++){const y=(now*.022+i*H*.247)%H;const h=.9+intensity*4.8;const x=(.5+.5*Math.sin(now*.0009+i*1.9))*W*.55;const w=W*(.10+.22*(.5+.5*Math.sin(now*.0014+i)));ctx.fillStyle=`rgba(${fg},${.022+intensity*.085})`;ctx.fillRect(x,y,w,h)}}
     };
-    const loopCanvas=now=>{draw(now);requestAnimationFrame(loopCanvas)};requestAnimationFrame(loopCanvas)}
+    const loopCanvas=now=>{draw(now);requestAnimationFrame(loopCanvas)};requestAnimationFrame(loopCanvas)
+  }
   function frame(now){animateObject(now);requestAnimationFrame(frame)}requestAnimationFrame(frame)
 }
-
 function initInstagramGallery(){
   const rail=$('#socialRail'),box=$('#igLightbox'),img=$('#igLightboxImage');
   if(!rail||!box||!img)return;
   const shots=$$('.social-shot',rail),srcs=shots.map(s=>s.querySelector('img')?.getAttribute('src')).filter(Boolean),progress=$('#socialProgress');
-  let current=0,drag=false,startX=0,startScroll=0,moved=false;
-  const updateProgress=()=>{const max=Math.max(1,rail.scrollWidth-rail.clientWidth),v=Math.max(.035,Math.min(1,rail.scrollLeft/max));progress?.parentElement?.style.setProperty('--ig-progress',v)};
-  rail.addEventListener('scroll',updateProgress,{passive:true});addEventListener('resize',updateProgress);setTimeout(updateProgress,40);
-  rail.addEventListener('pointerdown',e=>{drag=true;moved=false;startX=e.clientX;startScroll=rail.scrollLeft;rail.classList.add('is-dragging');rail.setPointerCapture?.(e.pointerId)});
-  rail.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-startX;if(Math.abs(dx)>4)moved=true;rail.scrollLeft=startScroll-dx*1.15});
-  const end=()=>{drag=false;rail.classList.remove('is-dragging')};rail.addEventListener('pointerup',end);rail.addEventListener('pointercancel',end);
-  const render=()=>{img.style.opacity='.1';img.src=srcs[current];$('#igLightboxCount').textContent=String(current+1).padStart(2,'0')+' / '+String(srcs.length).padStart(2,'0');requestAnimationFrame(()=>{img.style.opacity='1';img.style.animation='none';void img.offsetWidth;img.style.animation=''})};
+  const prevBtn=$('#socialPrev'),nextBtn=$('#socialNext');
+  let current=0,drag=false,startX=0,startScroll=0,moved=false,lastDragAt=0;
+
+  const maxScroll=()=>Math.max(0,rail.scrollWidth-rail.clientWidth);
+  const updateProgress=()=>{
+    const max=maxScroll(), v=max ? Math.max(.035,Math.min(1,rail.scrollLeft/max)) : 1;
+    progress?.parentElement?.style.setProperty('--ig-progress',v);
+    if(prevBtn)prevBtn.disabled=rail.scrollLeft<=2;
+    if(nextBtn)nextBtn.disabled=rail.scrollLeft>=max-2;
+  };
+  const step=()=>Math.max(280,Math.min(rail.clientWidth*.72,620));
+  const scrollGallery=dir=>rail.scrollBy({left:dir*step(),behavior:'smooth'});
+
+  rail.addEventListener('scroll',updateProgress,{passive:true});
+  addEventListener('resize',updateProgress);
+  requestAnimationFrame(updateProgress);
+  setTimeout(updateProgress,250);
+
+  prevBtn?.addEventListener('click',()=>scrollGallery(-1));
+  nextBtn?.addEventListener('click',()=>scrollGallery(1));
+
+  // Wheel / trackpad: vertical wheel movement moves the horizontal rail when hovered.
+  rail.addEventListener('wheel',e=>{
+    if(maxScroll()<=0)return;
+    const dominant=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+    if(!dominant)return;
+    const before=rail.scrollLeft;
+    rail.scrollLeft+=dominant*.9;
+    if(rail.scrollLeft!==before)e.preventDefault();
+  },{passive:false});
+
+  rail.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse' && e.button!==0)return;
+    drag=true;moved=false;startX=e.clientX;startScroll=rail.scrollLeft;
+    rail.classList.add('is-dragging');
+    rail.setPointerCapture?.(e.pointerId);
+  });
+  rail.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    const dx=e.clientX-startX;
+    if(Math.abs(dx)>5)moved=true;
+    rail.scrollLeft=startScroll-dx*1.2;
+  });
+  const end=e=>{
+    if(!drag)return;
+    if(moved)lastDragAt=performance.now();
+    drag=false;
+    rail.classList.remove('is-dragging');
+    try{if(e?.pointerId!=null && rail.hasPointerCapture?.(e.pointerId))rail.releasePointerCapture(e.pointerId)}catch(_){}
+  };
+  rail.addEventListener('pointerup',end);
+  rail.addEventListener('pointercancel',end);
+  rail.addEventListener('lostpointercapture',end);
+
+  const render=()=>{
+    img.style.opacity='.1';img.src=srcs[current];
+    $('#igLightboxCount').textContent=String(current+1).padStart(2,'0')+' / '+String(srcs.length).padStart(2,'0');
+    requestAnimationFrame(()=>{img.style.opacity='1';img.style.animation='none';void img.offsetWidth;img.style.animation=''});
+  };
   const open=i=>{current=i;render();box.classList.add('open');box.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'};
   const close=()=>{box.classList.remove('open');box.setAttribute('aria-hidden','true');document.body.style.overflow=''};
-  shots.forEach((s,i)=>s.addEventListener('click',e=>{if(moved){e.preventDefault();return}open(i)}));
-  $('#igLightboxClose')?.addEventListener('click',close);$('#igPrev')?.addEventListener('click',()=>{current=(current-1+srcs.length)%srcs.length;render()});$('#igNext')?.addEventListener('click',()=>{current=(current+1)%srcs.length;render()});
-  box.addEventListener('click',e=>{if(e.target===box)close()});addEventListener('keydown',e=>{if(!box.classList.contains('open'))return;if(e.key==='Escape')close();if(e.key==='ArrowLeft'){current=(current-1+srcs.length)%srcs.length;render()}if(e.key==='ArrowRight'){current=(current+1)%srcs.length;render()}});
-  if(!matchMedia('(prefers-reduced-motion:reduce)').matches){shots.forEach(s=>s.addEventListener('pointermove',e=>{const r=s.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5,im=s.querySelector('img');if(im)im.style.transform=`scale(1.055) translate(${x*-9}px,${y*-9}px)`}));shots.forEach(s=>s.addEventListener('pointerleave',()=>{const im=s.querySelector('img');if(im)im.style.transform=''}))}
-}
 
+  shots.forEach((s,i)=>s.addEventListener('click',e=>{
+    if(moved || performance.now()-lastDragAt<180){e.preventDefault();return}
+    open(i);
+  }));
+  $('#igLightboxClose')?.addEventListener('click',close);
+  $('#igPrev')?.addEventListener('click',()=>{current=(current-1+srcs.length)%srcs.length;render()});
+  $('#igNext')?.addEventListener('click',()=>{current=(current+1)%srcs.length;render()});
+  box.addEventListener('click',e=>{if(e.target===box)close()});
+  addEventListener('keydown',e=>{
+    if(box.classList.contains('open')){
+      if(e.key==='Escape')close();
+      if(e.key==='ArrowLeft'){current=(current-1+srcs.length)%srcs.length;render()}
+      if(e.key==='ArrowRight'){current=(current+1)%srcs.length;render()}
+    }else if(document.activeElement===rail){
+      if(e.key==='ArrowLeft'){e.preventDefault();scrollGallery(-1)}
+      if(e.key==='ArrowRight'){e.preventDefault();scrollGallery(1)}
+    }
+  });
+
+  if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    shots.forEach(s=>s.addEventListener('pointermove',e=>{
+      if(drag)return;
+      const r=s.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5,im=s.querySelector('img');
+      if(im)im.style.transform=`scale(1.055) translate(${x*-9}px,${y*-9}px)`;
+    }));
+    shots.forEach(s=>s.addEventListener('pointerleave',()=>{const im=s.querySelector('img');if(im)im.style.transform=''}));
+  }
+}
 function initLogin(){const form=$('#loginForm');if(!form)return;if(window.VRAuth?.isAdmin()){location.href='admin.html';return}form.addEventListener('submit',e=>{e.preventDefault();const u=$('#loginUser').value.trim(),p=$('#loginPass').value;if(window.VRAuth?.login(u,p)){toast('Вход выполнен');setTimeout(()=>location.href='admin.html',350)}else{$('#loginError').textContent='Неверный логин или пароль';form.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:260})}})}
 function initAdmin(){
-  const root=$('#adminRoot');if(!root)return;if(!window.VRAuth?.isAdmin()){location.replace('login.html');return}
+  if(!$('#adminRoot'))return;if(!window.VRAuth?.isAdmin()){location.replace('login.html');return}
   const get=()=>window.VR_PRODUCTS||[];
   let pendingFiles=[],selectedProductId='',previewUrls=[];
   const save=a=>{localStorage.setItem('vr_products_override',JSON.stringify(a));window.VR_PRODUCTS=a;render()};
   const clearPreviewUrls=()=>{previewUrls.forEach(u=>URL.revokeObjectURL(u));previewUrls=[]};
   const imageDims=file=>new Promise(async(resolve,reject)=>{try{if('createImageBitmap'in window){const b=await createImageBitmap(file);const d={width:b.width,height:b.height};b.close();resolve(d);return}const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const d={width:im.naturalWidth,height:im.naturalHeight};URL.revokeObjectURL(u);resolve(d)};im.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Не удалось прочитать изображение'))};im.src=u}catch(e){reject(e)}});
+
+  const defaultHeroCfg={type:'monogram',scale:100,offsetY:0,rotateY:0,shadow:70,glow:20,speed:100};
+  const readHeroCfg=()=>{try{return {...defaultHeroCfg,...JSON.parse(localStorage.getItem('vr_hero_object_settings')||'{}')}}catch(e){return {...defaultHeroCfg}}};
+  const writeHeroCfg=cfg=>localStorage.setItem('vr_hero_object_settings',JSON.stringify(cfg));
+
+  let heroPreviewUrls=[];
+  const clearHeroPreviewUrls=()=>{heroPreviewUrls.forEach(u=>URL.revokeObjectURL(u));heroPreviewUrls=[]};
+  const renderHeroMedia=async()=>{
+    if(!$('#heroObjectPreview'))return;
+    clearHeroPreviewUrls();
+    let rec=null;
+    try{if(window.VRMedia)rec=await window.VRMedia.heroGet('object')}catch(e){console.warn(e)}
+    const img=$('#heroObjectPreview'),state=$('#heroObjectState');
+    if(rec?.blob){const u=window.VRMedia.objectURL(rec);heroPreviewUrls.push(u);img.src=u;state&&(state.textContent='CUSTOM')}else{img.src=defaultHeroObjectSrc();state&&(state.textContent='DEFAULT')}
+  };
+  const updateHeroSettingsUI=(cfg=readHeroCfg())=>{
+    const map={type:['#heroObjType',v=>v],scale:['#heroObjScale',v=>v],offsetY:['#heroObjOffsetY',v=>v],rotateY:['#heroObjRotateY',v=>v],shadow:['#heroObjShadow',v=>v],glow:['#heroObjGlow',v=>v],speed:['#heroObjSpeed',v=>v]};
+    Object.entries(map).forEach(([k,[sel]])=>{$(sel)&&($(sel).value=cfg[k])});
+    $('#heroObjScaleVal')&&($('#heroObjScaleVal').textContent=`${cfg.scale}%`);
+    $('#heroObjOffsetYVal')&&($('#heroObjOffsetYVal').textContent=`${cfg.offsetY>0?'+':''}${cfg.offsetY} px`);
+    $('#heroObjRotateYVal')&&($('#heroObjRotateYVal').textContent=`${cfg.rotateY>0?'+':''}${cfg.rotateY}°`);
+    $('#heroObjShadowVal')&&($('#heroObjShadowVal').textContent=`${cfg.shadow}%`);
+    $('#heroObjGlowVal')&&($('#heroObjGlowVal').textContent=`${cfg.glow}%`);
+    $('#heroObjSpeedVal')&&($('#heroObjSpeedVal').textContent=`${cfg.speed}%`);
+  };
+  const saveHeroSettingsFromUI=()=>{
+    const cfg={
+      type:$('#heroObjType')?.value||'monogram',
+      scale:Number($('#heroObjScale')?.value)||100,
+      offsetY:Number($('#heroObjOffsetY')?.value)||0,
+      rotateY:Number($('#heroObjRotateY')?.value)||0,
+      shadow:Number($('#heroObjShadow')?.value)||70,
+      glow:Number($('#heroObjGlow')?.value)||20,
+      speed:Number($('#heroObjSpeed')?.value)||100,
+    };
+    writeHeroCfg(cfg); updateHeroSettingsUI(cfg);
+  };
+  const saveHeroFile=async(file)=>{
+    const err=$('#heroImageErrors');if(err)err.textContent='';
+    if(!file)return;
+    if(!/^image\//.test(file.type) && !/\.svg$/i.test(file.name||'')){if(err)err.textContent='Для баннера используйте SVG, PNG, WEBP или JPG.';return}
+    try{
+      if(file.type!=='image/svg+xml' && !/\.svg$/i.test(file.name||'')){
+        const d=await imageDims(file);if(Math.max(d.width,d.height)<900){if(err)err.textContent=`${file.name}: ${d.width}×${d.height}. Для качественной анимации рекомендуем минимум 900 px по большей стороне.`;return}
+      }
+      await window.VRMedia.heroSet('object',file);await renderHeroMedia();toast('Объект баннера обновлён')
+    }catch(e){if(err)err.textContent='Не удалось сохранить объект баннера';console.error(e)}
+  };
+
   const renderMedia=async productId=>{
     const box=$('#pImagePreview');if(!box)return;clearPreviewUrls();
     let existing=[];try{existing=productId&&window.VRMedia?await window.VRMedia.get(productId):[]}catch(e){}
@@ -238,6 +399,14 @@ function initAdmin(){
   $('#exportCatalog')?.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(get(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vrode-rovno-catalog.json';a.click();URL.revokeObjectURL(a.href)});
   $('#logoutBtn')?.addEventListener('click',()=>{window.VRAuth.logout();location.href='index.html'});
   const input=$('#pImages'),drop=$('#mediaDropZone');input?.addEventListener('change',()=>handleFiles(input.files));drop?.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('is-dragover')});drop?.addEventListener('dragleave',()=>drop.classList.remove('is-dragover'));drop?.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-dragover');handleFiles(e.dataTransfer.files)});
-  render();renderMedia('');
+
+  $('#heroObjectInput')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)saveHeroFile(f);e.target.value=''});
+  $('#heroObjectReset')?.addEventListener('click',async()=>{if(window.VRMedia){await window.VRMedia.heroRemove('object');await renderHeroMedia();toast('Объект баннера возвращён к стандартному')}});
+  $('#heroSettingsReset')?.addEventListener('click',()=>{writeHeroCfg(defaultHeroCfg);updateHeroSettingsUI(defaultHeroCfg);toast('Параметры объекта сброшены')});
+  ['#heroObjType','#heroObjScale','#heroObjOffsetY','#heroObjRotateY','#heroObjShadow','#heroObjGlow','#heroObjSpeed'].forEach(sel=>$(sel)?.addEventListener('input',saveHeroSettingsFromUI));
+  ['#heroObjType'].forEach(sel=>$(sel)?.addEventListener('change',saveHeroSettingsFromUI));
+
+  render();renderMedia('');renderHeroMedia();updateHeroSettingsUI();
+  new MutationObserver(()=>renderHeroMedia()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 }
 document.addEventListener('DOMContentLoaded',()=>{themeInit();authUI();nav();updateCartCount();reveals();cursor();intro();initTee();initInstagramGallery();initHome();initCatalog();initProduct();initLogin();initAdmin()});
